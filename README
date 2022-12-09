@@ -1,0 +1,11 @@
+A union filesystem served over 9p, written for Plan 9.
+It should work on Unix as well, but Unix file types like symlinks/hardlinks/sockets/devices are not supported.
+
+It uses the Styx[https://github.com/droyo/styx] library for 9p stuff. The lib is user-friendly, although parts of it do not seem to have been tested. For now I am applying bugfixes in my own fork only.
+
+This code was written to just support my docker implementation for Plan 9 (), and performance was not looked at. A considerable improvement could be achieved by caching dir traversals in particular. [do we have o3?] 9p is so chatty anyways, we can't really compete with something like the linux overlay2.
+
+[talk about docker, .wh., ...]
+
+Copy on write: The copy does not take place when writing to a file, but when the file is opened for writing. Implementing the usual cow would mean adding complexity to the Styx library for little benefit: the current mechanism may lead to unnecessary copying, but does not change the semantics of the fs.
+FIXME or would it be easy to patch styx?

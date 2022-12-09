@@ -1,0 +1,38 @@
+#!/bin/rc
+flag e +
+
+fn k{
+	unmount /n/overlayTest || echo -n
+	kill overlay | rc || echo 'nothing to kill'
+	fds=`{netstat -n | grep ' (Listen|Established) +888[9] ' | awk '{print $2}'}
+	for(fd in $fds){
+		echo hangup >/net/tcp/$fd/ctl || echo -n
+	}
+	rm -f /srv/overlay* || echo -n
+}
+
+fn run{
+	flag x +
+	rfork en
+	
+	if(~ $1 -q){
+		flags=()
+		prompt='%% '
+	}
+	if not{
+		flags=(-D -v)
+		prompt='
+%% '
+	}
+
+	w clear || echo -n
+	cd /usr/henri/src/k9s/cmd/overlay
+	go build
+	overlay $flags `{pwd}^/^(a b) &
+	sleep .2
+	cd /n/overlay
+	rc -i
+	unmount /n/overlay
+}
+
+$*
