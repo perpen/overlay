@@ -1,9 +1,7 @@
-* |a- // |a+ //
-* lsp: {Lcomp Ldef Lrefs Limpls Ltype Lrn}
-* lsp others: Lassist Lsyms Lfmt Lsig Lsyms Lws Lws+ Lws-
-
-* acme setup
+* column 1:
 	kill acme-lsp L | rc
 	acme-lsp
 	Lassist
 	Watch go test
+* column 2: {|a- // |a+ // Lcomp Ldef Lrefs Limpls Ltype Lrn}
+* lsp others: Lassist Lsyms Lfmt Lsig Lsyms Lws Lws+ Lws-
