@@ -1,7 +1,4 @@
-* column 1:
-	kill acme-lsp L | rc
-	acme-lsp
-	Lassist
-	Watch go test
-* column 2: {|a- // |a+ // Lcomp Ldef Lrefs Limpls Ltype Lrn}
-* lsp others: Lassist Lsyms Lfmt Lsig Lsyms Lws Lws+ Lws-
+kill acme-lsp L | rc; echo hi; sleep .5; acme-lsp & sleep 5;  Lassist
+Watch go test
+{|a- // |a+ // Ldef Lrefs Limpls Ltype Lrn}
+Lassist Lsyms Lfmt Lsig Lsyms Lws Lws+ Lws-
