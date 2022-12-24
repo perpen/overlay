@@ -45,9 +45,9 @@ func (ufs UFS) serve() {
 		ufs.id, ufs.addr, ufs.layers)
 	srv := fmt.Sprintf("/srv/%s", ufs.id)
 	go func() {
-		sleep2("ufs.serve before running srv", 1000)
+		sleep2("ufs.serve before running srv", 500)
 		os.Remove(srv)
-		fullAddr := fmt.Sprintf("tcp!nino!%d", ufs.port)
+		fullAddr := fmt.Sprintf("tcp!ninsis!%d", ufs.port)
 		log.Printf("overlay: running srv -cn %v %s %v\n",
 			fullAddr, ufs.id, ufs.mnt)
 		cmd := exec.Command("srv", "-cn", fullAddr, ufs.id, ufs.mnt)
