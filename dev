@@ -2,9 +2,11 @@
 flag e +
 
 fn k{
+	unmount /n/overlay || echo -n
 	unmount /n/overlayTest || echo -n
-	kill overlay | rc || echo 'nothing to kill'
+	kill overlay | sed 1q | rc || echo 'nothing to kill'
 	fds=`{netstat -n | grep ' (Listen|Established) +888[9] ' | awk '{print $2}'}
+	echo fds: $fds
 	for(fd in $fds){
 		echo hangup >/net/tcp/$fd/ctl || echo -n
 	}
@@ -25,14 +27,16 @@ fn run{
 %% '
 	}
 
-	w clear || echo -n
-	cd /usr/henri/src/k9s/cmd/overlay
+	#w clear || echo -n
+	kill overlay | rc || echo -n
+	cd /usr/henri/src/overlay
 	go build
-	overlay $flags `{pwd}^/^(a b) &
+	overlay $flags `{pwd}^/tmp/^(a b) &
 	sleep .2
 	cd /n/overlay
-	rc -i
-	unmount /n/overlay
+	rc -i || echo -n
+	unmount /n/overlay || echo 'not mounted'
+	rm /srv/overlay
 }
 
 $*

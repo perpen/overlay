@@ -47,7 +47,7 @@ func (ufs UFS) serve() {
 	go func() {
 		sleep2("ufs.serve before running srv", 1000)
 		os.Remove(srv)
-		fullAddr := fmt.Sprintf("tcp!ken!%d", ufs.port)
+		fullAddr := fmt.Sprintf("tcp!nino!%d", ufs.port)
 		log.Printf("overlay: running srv -cn %v %s %v\n",
 			fullAddr, ufs.id, ufs.mnt)
 		cmd := exec.Command("srv", "-cn", fullAddr, ufs.id, ufs.mnt)
@@ -71,7 +71,7 @@ func (ufs UFS) serve() {
 	}
 	err := styxServer.ListenAndServe()
 	fmt.Printf("ListenAndServe exited with: %v\n", err)
-	os.Remove(srv)
+	//os.Remove(srv)
 }
 
 func (ufs UFS) Serve9P(s *styx.Session) {

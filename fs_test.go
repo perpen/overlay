@@ -67,7 +67,7 @@ func (tester *UFSTester) reset() {
 func (tester *UFSTester) addLayer() {
 	if len(tester.ufs.layers) > 0 {
 		tester.unmount()
-		sleep("addLayer after unmount", 4000)
+		sleep("addLayer after unmount", 1000)
 	}
 	layerId := tester.nextLayerId
 	tester.nextLayerId++
@@ -84,7 +84,6 @@ func (tester *UFSTester) unmount() {
 	out, err := exec.Command("unmount", tester.ufs.mnt).Output()
 	if err != nil {
 		log.Fatalf("unmount: error: %v\n%s", err, string(out))
-		fmt.Printf("!!!!!!!!!!!!!!!!!!!!!\n")
 	}
 }
 
@@ -149,18 +148,17 @@ func TestUFS(t *testing.T) {
 		p3 := 0770
 	*/
 
-	fmt.Printf("1\n")
 	tester.addLayer()
 	tester.mkdir("A", perm0)
 	tester.mkfile("A/a", perm0, t0)
 	tester.chtimes("A", t0)
 	tester.assertDirEntries(t, "A", []string{"a"})
-	fmt.Printf("assertDirEntries post\n")
-	//tester.unmount()
 
+	check(os.Remove("/srv/overlayTest"))
 	sleep("before addLayer", 1000)
 	tester.addLayer()
-	//tester.unmount()
+	tester.assertDirEntries(t, "A", []string{"a"})
+	tester.unmount()
 
 	/*
 		tester.addLayer()
@@ -170,20 +168,19 @@ func TestUFS(t *testing.T) {
 
 		tester.unmount()
 
-			tester.addLayer()
-			tester.rm("B")
+		tester.addLayer()
+		tester.rm("B")
 
+		useLayers(1, 2, 3)
+		mkdir("A", 0666, 0)
+		mkfile("A/b", 0666, t1)
+		mkfile("A/c", 0666, t1)
+		chtimes("A", t1)
+		mkfile("e", 0444, t1)
 
-				useLayers(1, 2, 3)
-				mkdir("A", 0666, 0)
-				mkfile("A/b", 0666, t1)
-				mkfile("A/c", 0666, t1)
-				chtimes("A", t1)
-				mkfile("e", 0444, t1)
-
-				useLayers(0, 1, 2, 3)
-				rm("e")
-				mkfile("f", 0400, t0)
+		useLayers(0, 1, 2, 3)
+		rm("e")
+		mkfile("f", 0400, t0)
 	*/
 }
 
