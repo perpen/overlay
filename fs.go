@@ -438,19 +438,18 @@ func (ufs UFS) handleTremove(s *styx.Session, req styx.Tremove) {
 			return err
 		}
 		wh := fmt.Sprintf("%s%s/.wh.%s", ufs.layers[0], uparent, uname)
-		fmt.Printf("-- handleTremove: creating whiteout %s\n", wh)
 		_, err = os.OpenFile(wh, os.O_CREATE, 0600)
 		return err
 	}
+
 	upath := req.Path()
 	uf := ufs.resolve(upath)
 	if uf.depth == 0 {
 		info, err := os.Stat(uf.apath)
 		if err != nil {
-			req.Rerror("R1 %v", err)
+			req.Rremove(err)
 			return
 		}
-		fmt.Printf("-- handleTremove: removing %s\n", uf.apath)
 		if info.IsDir() {
 			err = os.RemoveAll(uf.apath)
 			if err != nil {
