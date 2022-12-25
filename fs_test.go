@@ -89,32 +89,32 @@ func (tester *UFSTester) unmount() {
 }
 
 func (tester *UFSTester) mkdir(path string, perm fs.FileMode) {
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	check(os.MkdirAll(fullPath, 0))
 	check(os.Chmod(fullPath, perm))
 }
 
 func (tester *UFSTester) mkfile(path string, perm fs.FileMode, t time.Time) {
 	content := fmt.Sprintf("<%s>", path)
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	check(os.WriteFile(fullPath, []byte(content), 0))
 	check(os.Chmod(fullPath, perm))
 	check(os.Chtimes(fullPath, t, t))
 }
 
 func (tester *UFSTester) chtimes(path string, t time.Time) {
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	check(os.Chtimes(fullPath, t, t))
 }
 
 func (tester *UFSTester) rm(path string) {
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	check(os.RemoveAll(fullPath))
 }
 
 func (tester *UFSTester) assertStat(t *testing.T,
 	path string, expectedPerm fs.FileMode, expectedTime time.Time) {
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	info, err := os.Stat(fullPath)
 	check(err)
 	actualTime := info.ModTime()
@@ -132,7 +132,7 @@ func (tester *UFSTester) assertStat(t *testing.T,
 func (tester *UFSTester) assertDirEntries(t *testing.T,
 	path string, expected []string) {
 
-	fullPath := tester.ufs.mnt + "/" + path
+	fullPath := tester.ufs.mnt + path
 	info, err := os.Stat(fullPath)
 	if err != nil {
 		t.Errorf("not found: %s", fullPath)
@@ -164,169 +164,55 @@ func TestUFS(t *testing.T) {
 	perm0 := fs.FileMode(0770)
 	perm1 := fs.FileMode(0771)
 	/*
-		p1 := 0771
 		p2 := 0770
 		p3 := 0770
 	*/
 
 	tester.addLayer()
-	tester.mkdir("A", perm0)
-	tester.mkfile("A/a", perm0, t0)
-	tester.chtimes("A", t0)
-	tester.assertStat(t, "A", perm0|fs.ModeDir, t0)
-	tester.assertStat(t, "A/a", perm0, t0)
-	tester.assertDirEntries(t, "A", []string{"a"})
+	tester.mkdir("/A", perm0)
+	tester.mkfile("/A/a", perm0, t0)
+	tester.chtimes("/A", t0)
+	tester.assertStat(t, "/A", perm0|fs.ModeDir, t0)
+	tester.assertStat(t, "/A/a", perm0, t0)
+	tester.assertDirEntries(t, "/A", []string{"a"})
 
-	check(os.Remove("/srv/overlayTest"))
-	sleep("before addLayer", 1000)
+	check(os.Remove("/srv/overlayTest")) //FIXME
 	tester.addLayer()
-	tester.assertStat(t, "A", perm0|fs.ModeDir, t0)
-	tester.assertStat(t, "A/a", perm0, t0)
-	tester.assertDirEntries(t, "A", []string{"a"})
+	tester.assertStat(t, "/A", perm0|fs.ModeDir, t0)
+	tester.assertStat(t, "/A/a", perm0, t0)
+	tester.assertDirEntries(t, "/A", []string{"a"})
 	existingDir := tester.ufs.mnt + "/A"
 	if err := os.Mkdir(existingDir, 0666); err == nil {
 		panic(fmt.Sprintf("mkdir on existing path %s: %v", existingDir, err))
 	}
-	tester.mkdir("B", perm1)
-	tester.mkfile("B/b", perm1, t1)
-	tester.chtimes("B", t1)
-	tester.assertStat(t, "B", perm1|fs.ModeDir, t1)
-	tester.assertStat(t, "B/b", perm1, t1)
-	tester.assertDirEntries(t, "B", []string{"b"})
-	tester.mkdir("B", perm1)
-	tester.mkfile("B/b", perm1, t1)
-	tester.chtimes("B", t1)
-	tester.assertStat(t, "B", perm1|fs.ModeDir, t1)
-	tester.assertStat(t, "B/b", perm1, t1)
-	tester.assertDirEntries(t, "B", []string{"b"})
+	tester.mkdir("/B", perm1)
+	tester.mkfile("/B/b", perm1, t1)
+	tester.chtimes("/B", t1)
+	tester.assertStat(t, "/B", perm1|fs.ModeDir, t1)
+	tester.assertStat(t, "/B/b", perm1, t1)
+	tester.assertDirEntries(t, "/B", []string{"b"})
+	tester.mkdir("/B", perm1)
+	tester.mkfile("/B/b", perm1, t1)
+	tester.chtimes("/B", t1)
+	tester.assertStat(t, "/B", perm1|fs.ModeDir, t1)
+	tester.assertStat(t, "/B/b", perm1, t1)
+	tester.assertDirEntries(t, "/B", []string{"b"})
 
-	tester.mkfile("A/b", perm1, t1)
-	tester.assertStat(t, "A/b", perm1, t1)
-	tester.assertDirEntries(t, "A", []string{"a", "b"})
+	tester.mkfile("/A/b", perm1, t1)
+	tester.assertStat(t, "/A/b", perm1, t1)
+	tester.assertDirEntries(t, "/A", []string{"a", "b"})
+
+	tester.assertDirEntries(t, "/", []string{"A", "B"})
+
+	check(os.Remove("/srv/overlayTest")) //FIXME
+	tester.addLayer()
+	tester.rm("/A/a")
+	tester.assertDirEntries(t, "/A", []string{"b"})
+	tester.rm("/A/b")
+	tester.assertDirEntries(t, "/A", []string{})
+	tester.assertDirEntries(t, "/", []string{"A", "B"})
+	tester.rm("/A")
+	tester.assertDirEntries(t, "/", []string{"B"})
 
 	tester.unmount()
-
-	/*
-		tester.addLayer()
-		tester.assertDirEntries(t, "A", []string{"a"})
-		tester.rm("A")
-		tester.assertDirEntries(t, "A", []string{})
-
-		tester.unmount()
-
-		tester.addLayer()
-		tester.rm("B")
-
-		useLayers(1, 2, 3)
-		mkdir("A", 0666, 0)
-		mkfile("A/b", 0666, t1)
-		mkfile("A/c", 0666, t1)
-		chtimes("A", t1)
-		mkfile("e", 0444, t1)
-
-		useLayers(0, 1, 2, 3)
-		rm("e")
-		mkfile("f", 0400, t0)
-	*/
 }
-
-/*
-func (tester *UFSTester) pathTime(path string) time.Time {
-	r := int(path[0]) - '0'
-	if r < 0 || r >= len(layers) {
-		panic(fmt.Sprintf("unexpected first char: %s", path))
-	}
-	return time.Date(2000+r, time.February, 0, 0, 0, 0, 0, time.Local)
-}
-
-func TestUFS(t *testing.T) {
-	// Setup the roots
-	resetRoots()
-	mkdirs("1/D", "3/D")
-	mkfiles("0/a", "0/.wh.b", "1/D/f", "1/D/g", "1/b", "2/.wh.D", "3/D/c")
-
-	// Change tree via the UFS
-	check(os.WriteFile(ufs.mnt+"/p", []byte("<p>"), 0644))
-	check(os.WriteFile(ufs.mnt+"/D/q", []byte("<D/q>"), 0644))
-	check(os.Mkdir(ufs.mnt+"/D/E", 0660))
-	check(os.WriteFile(ufs.mnt+"/D/g", []byte("<D/g>"), 0644))
-	//TODO check Chtimes, Chmod
-
-	chtimesAll()
-
-	tests := []struct {
-		path    string
-		year    int // -1 if path should be absent
-		isDir   bool
-		perms   fs.FileMode
-		entries []string // checked if isDir
-		content string   // checked if !isDir
-	}{
-		{"/", 2000, true, 0750, []string{"D", "a", "b", "p"}, ""},
-		{"/D", 2000, true, 0750, []string{"E", "f", "g", "q"}, ""},
-		{"/b", -1, false, 0640, nil, ""},
-		{"/a", 2000, false, 0640, nil, "<0/a>"},
-		{"/D/f", 2001, false, 0640, nil, "<1/D/f>"},
-		{"/D/g", 2000, false, 0640, nil, "<D/g>"},
-		{"/D/c", -1, false, 0640, nil, ""},
-		{"/D/q", 2000, false, 0640, nil, "<D/q>"},
-		{"/p", 2000, false, 0640, nil, "<p>"},
-	}
-	for _, tst := range tests {
-		abs := ufs.mnt + tst.path
-		info, err := os.Stat(abs)
-		if tst.year < 0 {
-			if err == nil {
-				t.Errorf("%s: path exists", tst.path)
-				continue
-			}
-		} else {
-			if tst.isDir {
-				// check dir entries
-				if !info.IsDir() {
-					t.Errorf("%s: expected a directory, got a file", tst.path)
-					continue
-				}
-				entries, _ := os.ReadDir(abs)
-				//FIXME check(err)
-				names := make([]string, len(entries))
-				for n, entry := range entries {
-					names[n] = entry.Name()
-				}
-				if !reflect.DeepEqual(names, tst.entries) {
-					t.Errorf("%s: expected dir entries %v, got %v",
-						tst.path, tst.entries, names)
-					continue
-				}
-			} else {
-				// check file content
-				if info.IsDir() {
-					t.Errorf("%s: expected a file, got a directory", tst.path)
-					continue
-				}
-				b, err := os.ReadFile(abs)
-				check(err)
-				content := string(b)
-				if content != tst.content {
-					t.Errorf("%s: expected content '%s', got '%s'",
-						tst.path, tst.content, content)
-					continue
-				}
-			}
-			// check stat
-			year := info.ModTime().Year()
-			if year != tst.year {
-				t.Errorf("%s: expected year %d, got %d",
-					tst.path, tst.year, year)
-				continue
-			}
-			perms := info.Mode().Perm()
-			if perms != tst.perms {
-				t.Errorf("%s: expected perms %o, got %o",
-					tst.path, tst.perms, perms)
-				continue
-			}
-		}
-	}
-}
-*/

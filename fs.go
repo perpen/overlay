@@ -178,7 +178,7 @@ func (ufs UFS) getDepth(upath string, maxDepth int) int {
 
 // Returns true iff path or one of its parents has a whiteout
 func (ufs UFS) upathHasWhiteout(upath string, maxDepth int) bool {
-	//fmt.Printf("hasWhiteout(%s, %d)\n", p, maxDepth)
+	//fmt.Printf("hasWhiteout(%s, %d)\n", upath, maxDepth)
 	assertAbsolute(upath)
 	names := strings.Split(upath, "/")[1:]
 	for depth := 0; depth <= maxDepth; depth++ {
@@ -250,7 +250,6 @@ func (udir UDirectory) Readdir(n int) ([]os.FileInfo, error) {
 
 func (ufs UFS) directory(upath string) styx.Directory {
 	//FIXME optimise allocs
-
 	infosByName := map[string]os.FileInfo{}
 	for depth := len(ufs.layers) - 1; depth >= 0; depth-- {
 		entries, err := os.ReadDir(ufs.apathAtDepth(upath, depth))
@@ -264,7 +263,14 @@ func (ufs UFS) directory(upath string) styx.Directory {
 				continue
 			}
 			name := info.Name()
-			if ufs.upathHasWhiteout(upath, depth) || strings.HasPrefix(name, ".wh.") {
+			//fmt.Printf("-- directory: depth=%d name=%s\n", depth, name)
+			var entryUpath string
+			if upath == "/" {
+				entryUpath = fmt.Sprintf("/%s", name)
+			} else {
+				entryUpath = fmt.Sprintf("%s/%s", upath, name)
+			}
+			if ufs.upathHasWhiteout(entryUpath, depth) || strings.HasPrefix(name, ".wh.") {
 				delete(infosByName, name)
 			} else {
 				infosByName[name] = info
@@ -424,13 +430,42 @@ func (ufs UFS) duplicate(asrc, atgt string) (err error) {
 }
 
 func (ufs UFS) handleTremove(s *styx.Session, req styx.Tremove) {
+	whiteout := func(upath string) error {
+		uparent := filepath.Dir(upath)
+		uname := filepath.Base(upath)
+		err := ufs.createParents(upath)
+		if err != nil {
+			return err
+		}
+		wh := fmt.Sprintf("%s%s/.wh.%s", ufs.layers[0], uparent, uname)
+		fmt.Printf("-- handleTremove: creating whiteout %s\n", wh)
+		_, err = os.OpenFile(wh, os.O_CREATE, 0600)
+		return err
+	}
 	upath := req.Path()
 	uf := ufs.resolve(upath)
-	if false && uf.depth > 0 {
-		// FIXME create whiteout
+	if uf.depth == 0 {
+		info, err := os.Stat(uf.apath)
+		if err != nil {
+			req.Rerror("R1 %v", err)
+			return
+		}
+		fmt.Printf("-- handleTremove: removing %s\n", uf.apath)
+		if info.IsDir() {
+			err = os.RemoveAll(uf.apath)
+			if err != nil {
+				req.Rremove(err)
+				return
+			}
+			err = whiteout(upath)
+		} else {
+			err = os.Remove(uf.apath)
+		}
+		req.Rremove(err)
+	} else {
+		err := whiteout(upath)
+		req.Rremove(err)
 	}
-	err := os.Remove(uf.apath)
-	req.Rremove(err)
 }
 
 func (ufs UFS) handleTutimes(s *styx.Session, req styx.Tutimes) {
