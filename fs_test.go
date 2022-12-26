@@ -112,6 +112,12 @@ func (tester *UFSTester) rm(path string) {
 	check(os.RemoveAll(fullPath))
 }
 
+func (tester *UFSTester) rename(oldPath, newPath string) {
+	fullPathOld := tester.ufs.mnt + oldPath
+	fullPathNew := tester.ufs.mnt + newPath
+	check(os.Rename(fullPathOld, fullPathNew))
+}
+
 func (tester *UFSTester) assertStat(t *testing.T,
 	path string, expectedPerm fs.FileMode, expectedTime time.Time) {
 	fullPath := tester.ufs.mnt + path
@@ -198,21 +204,25 @@ func TestUFS(t *testing.T) {
 	tester.assertStat(t, "/B/b", perm1, t1)
 	tester.assertDirEntries(t, "/B", []string{"b"})
 
-	tester.mkfile("/A/b", perm1, t1)
-	tester.assertStat(t, "/A/b", perm1, t1)
-	tester.assertDirEntries(t, "/A", []string{"a", "b"})
+	tester.mkfile("/A/a2", perm1, t1)
+	tester.assertStat(t, "/A/a2", perm1, t1)
+	tester.assertDirEntries(t, "/A", []string{"a", "a2"})
 
 	tester.assertDirEntries(t, "/", []string{"A", "B"})
 
 	check(os.Remove("/srv/overlayTest")) //FIXME
 	tester.addLayer()
 	tester.rm("/A/a")
-	tester.assertDirEntries(t, "/A", []string{"b"})
-	tester.rm("/A/b")
+	tester.assertDirEntries(t, "/A", []string{"a2"})
+	tester.rm("/A/a2")
 	tester.assertDirEntries(t, "/A", []string{})
 	tester.assertDirEntries(t, "/", []string{"A", "B"})
 	tester.rm("/A")
 	tester.assertDirEntries(t, "/", []string{"B"})
+	tester.assertDirEntries(t, "/B", []string{"b"})
+
+	tester.rename("/B/b", "/B/b2")
+	//	tester.rename("/B", "/B22")
 
 	tester.unmount()
 }
