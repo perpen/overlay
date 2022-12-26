@@ -496,11 +496,17 @@ func (ufs UFS) handleTtruncate(s *styx.Session, req styx.Ttruncate) {
 }
 
 func (ufs UFS) handleTrename(s *styx.Session, req styx.Trename) {
+	fmt.Printf("-- handleTrename: path=%s newPath=%s\n",
+		req.Path(), req.NewPath)
 	upath := req.Path()
 	uf := ufs.resolve(upath)
 	oldAPath := uf.apath
-	newAPath := ufs.apathAtDepth(req.NewPath, 0)
+	fmt.Printf("-- handleTrename: path=%s newPath=%s oldAPath=%s\n",
+		req.Path(), req.NewPath, oldAPath)
+	//newAPath := ufs.apathAtDepth(req.NewPath, 0)
+	newAPath := filepath.Dir(oldAPath) + "/" + req.NewPath
 	err := os.Rename(oldAPath, newAPath)
+	fmt.Printf("-- handleTrename: err=%v\n", err)
 	req.Rrename(err)
 }
 

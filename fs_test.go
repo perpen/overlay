@@ -115,6 +115,8 @@ func (tester *UFSTester) rm(path string) {
 func (tester *UFSTester) rename(oldPath, newPath string) {
 	fullPathOld := tester.ufs.mnt + oldPath
 	fullPathNew := tester.ufs.mnt + newPath
+	fmt.Printf("-- rename: fullPathOld=%s fullPathNew=%s\n",
+		fullPathOld, fullPathNew)
 	check(os.Rename(fullPathOld, fullPathNew))
 }
 
