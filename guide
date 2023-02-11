@@ -1,4 +1,5 @@
+/usr/henri/guide
+watch -sn 'git2 status # git/diff # n git2 push'
 kill acme-lsp L | rc; sleep .5; acme-lsp & sleep 5;  Lassist
-Watch go test
-{|a- // |a+ // Ldef Lrefs Limpls Ltype Lrn}
-Lassist Lsyms Lfmt Lsig Lsyms Lws Lws+ Lws-
+watch -s go test
+G Ldef Lrefs Limpls Ltype Lrn

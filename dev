@@ -29,7 +29,7 @@ fn run{
 
 	#w clear || echo -n
 	kill overlay | rc || echo -n
-	cd /usr/henri/src/overlay
+	cd /s/overlay
 	go build
 	overlay $flags `{pwd}^/tmp/^(a b) &
 	sleep .2

@@ -15,7 +15,7 @@ import (
 var tester UFSTester
 
 func TestMain(m *testing.M) {
-	testDir := "/usr/henri/src/overlay/tmp/layers"
+	testDir := "/s/overlay/tmp/layers"
 	tester = newUFSTester(testDir)
 	tester.reset()
 	os.Exit(m.Run())
